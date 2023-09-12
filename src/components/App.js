@@ -5,7 +5,7 @@ import AddContact from "./AddContact";
 import ContactList from "./ContactList"
 import { v4 as uuidv4 } from 'uuid';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-
+import ContactDetail from './ContactDetail';
 
 function App() {
   const LOCAL_STORAGE_KEY = "contact"
@@ -40,6 +40,7 @@ function App() {
         <Routes>
           <Route path='/add' element={<Navigate to="/" />} Component={() => (<AddContact addContactHandler={addContactHandler} />)} />
           <Route path='/' Component={() => (<ContactList contacts={contacts} getContactId={removeContactHandler} />)} />
+          <Route path='/contact/:id' Component={()=>(<ContactDetail/>)} ></Route>
         </Routes>
       </Router>
     </div>
