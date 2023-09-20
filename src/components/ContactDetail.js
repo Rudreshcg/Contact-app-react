@@ -1,15 +1,36 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { OrgChart } from "d3-org-chart";
-import { resData } from "./data";
-import { colors } from "@mui/material";
+import { Button, Modal, TextField } from "@mui/material";
+import { resDatas } from "./data"
+import axios from 'axios';
+import * as d3 from "d3"
+
+const { v4: uuidv4 } = require('uuid');
+
 
 const ContactDetail = () => {
     const d3Container = useRef(null);
     let chart = null;
 
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [resData, setResData] = useState([]);
+    const [formData, setFormData] = useState({ name: '', email: '', manager: '', department: '', title: '', parentId: '', nodeId: '' })
 
-    useLayoutEffect(() => {
+    useEffect(() => {
+        axios
+            .get("http://localhost:1880/getData/")
+            .then((response) => {
+                setResData(response.data);
+                console.log(response);
+            })
+            .catch((error) => {
+                console.error("Error fetching data:", error);
+            });
+    }, [])
+
+    useEffect(() => {
+
         if (resData && d3Container.current) {
             if (!chart) {
                 chart = new OrgChart();
@@ -26,8 +47,8 @@ const ContactDetail = () => {
                         }</span> ${node.data._totalSubordinates}  </div>`;
                 })
                 .onNodeClick((d, i, arr) => {
-                    console.log(d)
-                    createData(d)
+                    setIsFormVisible(true);
+                    setFormData({ formData, manager: d.data.name.toString(), parentId: d.data.nodeId })
                 })
                 .nodeContent(function (d, i, arr, state) {
                     return `
@@ -54,51 +75,144 @@ const ContactDetail = () => {
 
                 })
                 .render();
+            d3.select('.svg-chart-container')
+                .style("background-color", '#4c4a4a')
+
+            d3.selectAll('path')
+                .style("stroke", "white")
+
         }
 
-    }, [resData, d3Container.current, isExpanded]);
+        console.log("hello im useEffet")
+
+    }, [resData, d3Container.current, isExpanded, isFormVisible, formData]);
+
 
     const toggleExpandCollapse = () => {
         if (chart) {
             if (isExpanded) {
-                chart.collapseAll();
+                chart.collapseAll().fit();
+                chart.setCentered("79ff83a3-e662-483d-9f58-5eb69fa2bee2")
             }
             else {
-                chart.expandAll();
+                chart.expandAll().fit();
             }
         }
         setIsExpanded(!isExpanded);
 
     };
 
-    const createData = (d) => {
-        resData.push(
-            {
-                positionName: "607a97662a3b0c8607a97662",
-                id: "yh77855877",
-                parentId: d,
-                tags: "OLTIN-DIREKTOR",
-                name: "Axmadjon",
-                area: "OLTIN-DIREKTOR",
-                imageUrl:
-                    "https://cdn.britannica.com/s:250x250,c:crop/05/156805-050-4B632781/Leonardo-DiCaprio-2010.jpg",
-                isLoggedUser: true
-            },
-        )
+
+    let newData = {
+        "name": formData.name,
+        "managername": formData.manager,
+        "department": formData.department,
+        "title": formData.title,
+        "parentId": formData.parentId,
+        "nodeId": uuidv4()
     }
+
+    // const addData = () => {
+    //     let newData = [{
+    //         "name": formData.name,
+    //         "managername": formData.manager,
+    //         "department": formData.department,
+    //         "title": formData.title
+    //     }]
+
+
+
+    //     console.log(newData)
+
+    // }
+    const addData = async () => {
+
+        try {
+            const response = await fetch('http://localhost:1880/addData/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newData),
+            });
+
+            if (response.ok) {
+                setResData((prev) => {
+                    prev.push({
+                        "name": formData.name,
+                        "managername": formData.manager,
+                        "department": formData.department,
+                        "title": formData.title,
+                        "parentId": formData.parentId,
+                        "nodeId": uuidv4(),
+                        _expanded: true,
+                        _centered: true,
+                    });
+                    return [...prev];
+                });
+                const data = await response.json();
+                console.log('Data from API:', data);
+            } else {
+                console.error('Request failed:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        // window.location.reload()
+    };
+
 
     return (
         <div>
-            <div style={{ float: "right", }}>
-                <button onClick={toggleExpandCollapse} style={{
-                    background: "#1c1b1b", color: "whitesmoke",
-                    fontSize: "15px", fontWeight: "bold", padding: "4px", borderRadius: "10px"
-                }}>
-                    {isExpanded ? "Collapse All" : "Expend All"}
-                </button>
+            <div>
+
+                <Button
+                    variant="contained"
+                    onClick={toggleExpandCollapse}
+                    className="buttonContainer"
+                    style={{ float: "right" }}
+                >
+                    {isExpanded ? "Collapse All" : "Expand All"}
+                </Button>
             </div>
-            <div ref={d3Container}>
-            </div>
+
+            <Modal
+                open={isFormVisible}
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+                onClose={() => setIsFormVisible(false)}
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        height: 450,
+                        width: 350,
+                        backgroundColor: "#FFF",
+                    }}
+                >
+                    <div>
+
+                    </div>
+                    <TextField style={{ margin: "10px" }} label={'Name'} required type="text" value={formData?.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                    <TextField style={{ margin: "10px" }} label={'Email'} required type="email" value={formData?.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                    <TextField style={{ margin: "10px" }} label={'Department'} required type="department" value={formData?.department} onChange={e => setFormData({ ...formData, department: e.target.value })} />
+                    <TextField style={{ margin: "10px" }} label={'title'} required type="title" value={formData?.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+                    <TextField style={{ margin: "10px" }} label={'Manager name'} type="text" value={formData?.manager} disabled={true} />
+                    <Button style={{ marginTop: 15 }} variant="contained" onClick={() => {
+                        setIsFormVisible(false)
+                        addData()
+                    }}>
+                        ADD
+                    </Button>
+                </div>
+            </Modal>
+            <div ref={d3Container}></div>
         </div>
     );
 };
