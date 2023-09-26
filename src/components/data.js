@@ -9786,7 +9786,7 @@ let dataInform = [
     // }
 ];
 
-export const resDatas = dataInform;
+export const resData = dataInform;
 
 
 

@@ -1,10 +1,9 @@
-import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { OrgChart } from "d3-org-chart";
 import { Button, Modal, TextField } from "@mui/material";
-import { resDatas } from "./data"
+// import { resDatas } from "./data"
 import axios from 'axios';
 import * as d3 from "d3"
-
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -15,14 +14,14 @@ const ContactDetail = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [resData, setResData] = useState([]);
-    const [formData, setFormData] = useState({ name: '', email: '', manager: '', department: '', title: '', parentId: '', nodeId: '' })
+    const [formData, setFormData] = useState({ name: '', email: '', manager: '', department: '', title: '', parentId: '' })
 
     useEffect(() => {
         axios
-            .get("http://localhost:1880/getData/")
+            .get("http://localhost:1880/orgchart/")
             .then((response) => {
                 setResData(response.data);
-                console.log(response);
+                // console.log(response);
             })
             .catch((error) => {
                 console.error("Error fetching data:", error);
@@ -48,14 +47,15 @@ const ContactDetail = () => {
                 })
                 .onNodeClick((d, i, arr) => {
                     setIsFormVisible(true);
-                    setFormData({ formData, manager: d.data.name.toString(), parentId: d.data.nodeId })
+                    // console.log(d.data)
+                    setFormData({ formData, manager: d.data.name.toString(), parentId: d.data.id })
                 })
                 .nodeContent(function (d, i, arr, state) {
                     return `
           <div style="padding-top:30px;background-color:none;margin-left:1px;height:${d.height
-                        }px;border-radius:2px;overflow:visible">
-            <div style="height:${d.height - 72
-                        }px;padding-top:0px;background-color:#1c1b1b;border:1px solid #1c1b1b; display: flex;">
+                        }px;border-radius:2px;overflow:visible; ">
+            <div style="height:${d.height - 32
+                        }px;padding-top:0px;background-color:#1c1b1b;border:3px solid #2545e1; border-radius:10px; display: flex;">
             <div style="align-self: center;">
             <img src=" ${d.data.imageUrl}" alt="${d.data.name}" 
             style="color:whitesmoke; font-size:10px;padding: 5px; border-radius:100px;width:60px;height:60px;" />
@@ -63,27 +63,26 @@ const ContactDetail = () => {
              <div style="padding:20px; text-align:center;">
                  <div style="color:whitesmoke;font-size:16px;font-weight:bold"> ${d.data.name
                         } </div>
-                 <div style="color:whitesmoke;font-size:12px;margin-top:4px"> ${d.data.positionName
+                 <div style="color:whitesmoke;font-size:12px;margin-top:4px"> ${d.data.department
                         } </div>
-                <div style="color:whitesmoke;font-size:12px;margin-top:4px">ID:${d.data.id}</div>
+                <div style="color:whitesmoke;font-size:12px;margin-top:4px">ID:${d.data.nodeId}</div>
              </div> 
              <div style="display:flex;justify-content:space-between;padding-left:15px;padding-right:15px;"> 
              </div>
             </div>     
     </div>
 `;
-
                 })
                 .render();
-            d3.select('.svg-chart-container')
-                .style("background-color", '#4c4a4a')
+            // d3.select('.svg-chart-container')
+            //     .style("background-color", 'rgb(157 153 153)')
 
-            d3.selectAll('path')
-                .style("stroke", "white")
+            // d3.selectAll('path')
+            //     .style("stroke", "white")
 
         }
 
-        console.log("hello im useEffet")
+        // console.log("hello im useEffet")
 
     }, [resData, d3Container.current, isExpanded, isFormVisible, formData]);
 
@@ -105,30 +104,21 @@ const ContactDetail = () => {
 
     let newData = {
         "name": formData.name,
-        "managername": formData.manager,
+        "email_address": formData.email,
+        "manager": formData.manager,
         "department": formData.department,
         "title": formData.title,
         "parentId": formData.parentId,
-        "nodeId": uuidv4()
+        "id": uuidv4()
     }
 
-    // const addData = () => {
-    //     let newData = [{
-    //         "name": formData.name,
-    //         "managername": formData.manager,
-    //         "department": formData.department,
-    //         "title": formData.title
-    //     }]
+    console.log(newData)
 
 
-
-    //     console.log(newData)
-
-    // }
     const addData = async () => {
 
         try {
-            const response = await fetch('http://localhost:1880/addData/', {
+            const response = await fetch('http://localhost:1880/orgchart/adduser/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -140,18 +130,19 @@ const ContactDetail = () => {
                 setResData((prev) => {
                     prev.push({
                         "name": formData.name,
-                        "managername": formData.manager,
+                        "email_address": formData.email,
+                        "manager": formData.manager,
                         "department": formData.department,
                         "title": formData.title,
                         "parentId": formData.parentId,
-                        "nodeId": uuidv4(),
-                        _expanded: true,
-                        _centered: true,
+                        "id": uuidv4(),
+                        _centured: true,
+                        _expanded: true
                     });
                     return [...prev];
                 });
                 const data = await response.json();
-                console.log('Data from API:', data);
+                // console.log('Data from API:', data);
             } else {
                 console.error('Request failed:', response.statusText);
             }
@@ -164,7 +155,7 @@ const ContactDetail = () => {
 
     return (
         <div>
-            <div>
+            <div style={{ paddingBottom: "50px" }}>
 
                 <Button
                     variant="contained"
@@ -218,115 +209,3 @@ const ContactDetail = () => {
 };
 
 export default ContactDetail;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React, { useEffect } from "react";
-// import OrgChart from "orgchart.js";
-// import "orgchart.js/src/orgchart.css";
-// // import { OrgChart } from 'd3-org-chart';
-
-// const ContactDetail = () => {
-//     const ds = {
-//         id: "n1",
-//         name: "Ragulan",
-//         title: "general manager",
-//         children: [
-//             { id: "n2", name: "Bo Miao", title: "department manager", test: "je" },
-//             {
-//                 id: "n3",
-//                 name: "Su Miao",
-//                 title: "department manager",
-//                 children: [
-//                     { id: "n4", name: "Tie Hua", title: "senior engineer" },
-//                     {
-//                         id: "n5",
-//                         name: "Hei Hei",
-//                         title: "senior engineer",
-//                         children: [
-//                             { id: "n6", name: "Dan Dan", title: "engineer" },
-//                             { id: "n7", name: "Xiang Xiang", title: "engineer" }
-//                         ]
-//                     },
-//                     { id: "n8", name: "Pang Pang", title: "senior engineer" }
-//                 ]
-//             },
-//             { id: "n9", name: "Hong Miao", title: "department manager" },
-//             {
-//                 id: "n10",
-//                 name: "Chun Miao",
-//                 title: "department manager",
-//                 children: [{ id: "n11", name: "Yue Yue", title: "senior engineer" }]
-//             }
-//         ]
-//     };
-//     useEffect(() => {
-//         new OrgChart({
-//             chartContainer: "#chart-container",
-//             data: ds,
-//             nodeContent: "title",
-//             parentNodeSymbol: "https://png.pngtree.com/png-clipart/20190515/original/pngtree-instagram-social-media-icon-png-image_3572487.jpg",
-//             pan: true,
-//             nodeTemplate: (data) =>
-//                 `<div class="title"><span>${data.id}</span></div><div class="content"><span>${data.id}</span></div>`
-//         });
-//     });
-//     return <div id="chart-container" />;
-// };
-
-
-// export default ContactDetail
-
