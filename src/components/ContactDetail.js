@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { OrgChart } from "d3-org-chart";
 import { Button, Modal, TextField } from "@mui/material";
-// import { resDatas } from "./data"
+// import { resData } from "./data"
 import axios from 'axios';
-import * as d3 from "d3"
+// import * as d3 from "d3"
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -209,3 +209,4 @@ const ContactDetail = () => {
 };
 
 export default ContactDetail;
+
